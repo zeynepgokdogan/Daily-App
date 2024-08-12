@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "993205810180",
+    "project_id": "database-8fa06",
+    "storage_bucket": "database-8fa06.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993205810180:android:692caa9bbeb145861ab151",
+        "android_client_info": {
+          "package_name": "com.zeynep.flutter_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSM8HaZf-fvG7ww7n1phvtC-obe5ResrA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
