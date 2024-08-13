@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'signup_page.dart'; // Import the SignUpPage
-import 'home_page.dart'; // Import the HomePage
+import 'signup_page.dart';
+import 'daily.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
       // Navigate to HomePage after successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const Daily()),
       );
     } catch (e) {
       print('Error: ${e.toString()}');
