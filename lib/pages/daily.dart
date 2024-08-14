@@ -1,6 +1,10 @@
+import 'dart:io';
+
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '/util/styles.dart';
 import '/util/calendar.dart';
@@ -16,6 +20,7 @@ class _DailyState extends State<Daily> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   DateTime? _selectedDate;
+  XFile? _imageFile; // Variable to store the selected image
 
   // Method to handle date changes
   void _handleDateChanged(DateTime? selectedDate) {
@@ -34,27 +39,55 @@ class _DailyState extends State<Daily> {
     User? user = FirebaseAuth.instance.currentUser; // Get current user
 
     if (title.isNotEmpty && content.isNotEmpty && user != null) {
-      await FirebaseFirestore.instance
-          .collection('users') // Use 'users' collection
-          .doc(user.uid) // User ID as document ID
-          .collection('diary_entries') // Sub-collection for diary entries
-          .add({
+      Map<String, dynamic> entry = {
         'title': title,
         'content': content,
         'timestamp': _selectedDate != null
             ? Timestamp.fromDate(_selectedDate!)
             : FieldValue.serverTimestamp(),
-      });
+      };
+
+      // If an image is selected, add its URL to the entry
+      if (_imageFile != null) {
+        // Code to upload image and get the URL
+        // For now, we'll just use a placeholder URL
+        entry['image_url'] = 'URL_OF_THE_UPLOADED_IMAGE';
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('diary_entries')
+          .add(entry);
 
       _titleController.clear();
       _contentController.clear();
+      setState(() {
+        _imageFile = null; // Clear selected image
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Günlük başarıyla kaydedildi!')),
+        const SnackBar(content: Text('Memory saved Successfully!')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter all areas.')),
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile =
+          await picker.pickImage(source: ImageSource.gallery);
+      setState(() {
+        _imageFile = pickedFile;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Lütfen tüm alanları doldurun veya giriş yapın')),
+            content: Text('Camera permission is required to pick images.')),
       );
     }
   }
@@ -123,6 +156,15 @@ class _DailyState extends State<Daily> {
                     ),
                     style: customTextStyle,
                   ),
+                  if (_imageFile != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: Image.file(
+                        File(_imageFile!.path),
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -149,9 +191,7 @@ class _DailyState extends State<Daily> {
                       color: iconStyle().color,
                       size: iconStyle().size,
                     ),
-                    onPressed: () {
-                      // Fotoğraf eklemek için kod
-                    },
+                    onPressed: _pickImage,
                   ),
                   IconButton(
                     icon: Icon(
