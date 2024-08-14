@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,9 +21,8 @@ class _DailyState extends State<Daily> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   DateTime? _selectedDate;
-  XFile? _imageFile; // Variable to store the selected image
+  XFile? _imageFile;
 
-  // Method to handle date changes
   void _handleDateChanged(DateTime? selectedDate) {
     setState(() {
       _selectedDate = selectedDate;
@@ -36,7 +36,7 @@ class _DailyState extends State<Daily> {
     String title = _titleController.text.trim();
     String content = _contentController.text.trim();
 
-    User? user = FirebaseAuth.instance.currentUser; // Get current user
+    User? user = FirebaseAuth.instance.currentUser;
 
     if (title.isNotEmpty && content.isNotEmpty && user != null) {
       Map<String, dynamic> entry = {
@@ -47,11 +47,19 @@ class _DailyState extends State<Daily> {
             : FieldValue.serverTimestamp(),
       };
 
-      // If an image is selected, add its URL to the entry
       if (_imageFile != null) {
-        // Code to upload image and get the URL
-        // For now, we'll just use a placeholder URL
-        entry['image_url'] = 'URL_OF_THE_UPLOADED_IMAGE';
+        try {
+          final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('images')
+              .child('$fileName.jpg');
+          await ref.putFile(File(_imageFile!.path));
+          final imageUrl = await ref.getDownloadURL();
+          entry['image_url'] = imageUrl;
+        } catch (e) {
+          print('Error uploading image: $e');
+        }
       }
 
       await FirebaseFirestore.instance
@@ -63,7 +71,7 @@ class _DailyState extends State<Daily> {
       _titleController.clear();
       _contentController.clear();
       setState(() {
-        _imageFile = null; // Clear selected image
+        _imageFile = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Memory saved Successfully!')),
