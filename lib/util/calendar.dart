@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class Calendar extends StatefulWidget {
-  const Calendar({super.key});
+  final ValueChanged<DateTime?> onDateChanged;
+
+  const Calendar({Key? key, required this.onDateChanged}) : super(key: key);
 
   @override
   State<Calendar> createState() => _CalendarState();
@@ -23,6 +25,9 @@ class _CalendarState extends State<Calendar> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        widget.onDateChanged(_selectedDate);
+        print(
+            "Selected date in Calendar: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
       });
     }
   }
@@ -57,6 +62,9 @@ class _CalendarState extends State<Calendar> {
                 _isLeftArrowPressed = false;
                 _selectedDate = (_selectedDate ?? DateTime.now())
                     .subtract(const Duration(days: 1));
+                widget.onDateChanged(_selectedDate);
+                print(
+                    "Date changed to: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
               });
             },
             onTapCancel: () {
@@ -92,6 +100,9 @@ class _CalendarState extends State<Calendar> {
                 _isRightArrowPressed = false;
                 _selectedDate = (_selectedDate ?? DateTime.now())
                     .add(const Duration(days: 1));
+                widget.onDateChanged(_selectedDate);
+                print(
+                    "Date changed to: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
               });
             },
             onTapCancel: () {

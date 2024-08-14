@@ -1,15 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:intl/intl.dart';
 import '/util/styles.dart';
 import '/util/calendar.dart';
 
 class Daily extends StatefulWidget {
-  const Daily({super.key});
+  const Daily({Key? key}) : super(key: key);
 
   @override
   State<Daily> createState() => _DailyState();
 }
 
 class _DailyState extends State<Daily> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
+  DateTime? _selectedDate;
+
+  // Method to handle date changes
+  void _handleDateChanged(DateTime? selectedDate) {
+    setState(() {
+      _selectedDate = selectedDate;
+      print(
+          "Date received in Daily: ${_selectedDate != null ? DateFormat('dd MMM yyyy').format(_selectedDate!) : 'None'}"); // Debug print
+    });
+  }
+
+  // Method to save daily entry
+  Future<void> _saveDaily() async {
+    String title = _titleController.text.trim();
+    String content = _contentController.text.trim();
+
+    User? user = FirebaseAuth.instance.currentUser; // Get current user
+
+    if (title.isNotEmpty && content.isNotEmpty && user != null) {
+      await FirebaseFirestore.instance
+          .collection('users') // Use 'users' collection
+          .doc(user.uid) // User ID as document ID
+          .collection('diary_entries') // Sub-collection for diary entries
+          .add({
+        'title': title,
+        'content': content,
+        'timestamp': _selectedDate != null
+            ? Timestamp.fromDate(_selectedDate!)
+            : FieldValue.serverTimestamp(),
+      });
+
+      _titleController.clear();
+      _contentController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Günlük başarıyla kaydedildi!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Lütfen tüm alanları doldurun veya giriş yapın')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -43,34 +92,39 @@ class _DailyState extends State<Daily> {
             backgroundColor: Colors.transparent,
             elevation: 0,
           ),
-          body: const SingleChildScrollView(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(child: Calendar()),
-                SizedBox(height: 30),
-                TextField(
-                  textAlign: TextAlign.left,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintStyle: hintTextStyle,
-                    hintText: 'Title',
+          body: Padding(
+            padding: const EdgeInsets.only(top: 50.0),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Calendar(onDateChanged: _handleDateChanged),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: _titleController,
+                    textAlign: TextAlign.left,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintStyle: hintTextStyle,
+                      hintText: 'Title',
+                    ),
+                    style: customTextStyle,
                   ),
-                  style: customTextStyle,
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  textAlign: TextAlign.left,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintStyle: customTextStyle,
-                    hintText: 'Start typing...',
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _contentController,
+                    textAlign: TextAlign.left,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintStyle: customTextStyle,
+                      hintText: 'Start typing...',
+                    ),
+                    style: customTextStyle,
                   ),
-                  style: customTextStyle,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -86,28 +140,28 @@ class _DailyState extends State<Daily> {
                 color: Color(0xFFF26950),
                 borderRadius: BorderRadius.all(Radius.circular(50)),
               ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: iconStyle().color,
-                        size: iconStyle().size,
-                      ),
-                      onPressed: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: iconStyle().color,
+                      size: iconStyle().size,
                     ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.save_alt_outlined,
-                        color: iconStyle().color,
-                        size: iconStyle().size,
-                      ),
-                      onPressed: () {},
+                    onPressed: () {
+                      // Fotoğraf eklemek için kod
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.save_alt_outlined,
+                      color: iconStyle().color,
+                      size: iconStyle().size,
                     ),
-                  ],
-                ),
+                    onPressed: _saveDaily,
+                  ),
+                ],
               ),
             ),
           ),
