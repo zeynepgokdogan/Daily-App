@@ -50,7 +50,7 @@ class HomePage extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 50.0),
+            padding: const EdgeInsets.only(top: 50.0, right: 20.0, left: 20.0),
             child: SafeArea(
               child: Column(
                 children: [
@@ -167,7 +167,7 @@ class HomePage extends StatelessWidget {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8.0, vertical: 4.0),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF26950),
+                                        color: const Color(0xFFf79c8c),
                                         borderRadius:
                                             BorderRadius.circular(8.0),
                                       ),

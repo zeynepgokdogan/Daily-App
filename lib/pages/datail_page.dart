@@ -1,10 +1,14 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '/util/styles.dart';
+import '/util/calendar.dart';
 
 class DetailPage extends StatefulWidget {
   final String documentId;
@@ -25,7 +29,15 @@ class _DetailPageState extends State<DetailPage> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
+    _contentController = TextEditingController();
     _fetchData();
+  }
+
+  void _handleDateChanged(DateTime? selectedDate) {
+    setState(() {
+      _selectedDate = selectedDate;
+    });
   }
 
   Future<void> _fetchData() async {
@@ -38,8 +50,8 @@ class _DetailPageState extends State<DetailPage> {
 
     if (doc.exists) {
       final data = doc.data()!;
-      _titleController = TextEditingController(text: data['title'] ?? '');
-      _contentController = TextEditingController(text: data['content'] ?? '');
+      _titleController.text = data['title'] ?? '';
+      _contentController.text = data['content'] ?? '';
       _imageUrl = data['image_url'] as String?;
       _selectedDate = (data['timestamp'] as Timestamp?)?.toDate();
       setState(() {});
@@ -94,12 +106,34 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile =
-        await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    final status = await Permission.camera.request();
+    if (status.isGranted) {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile =
+          await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Camera permission is required to pick images.')),
+      );
+    }
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedDate) {
       setState(() {
-        _imageFile = pickedFile;
+        _selectedDate = picked;
       });
     }
   }
@@ -121,106 +155,110 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
             Scaffold(
+              resizeToAvoidBottomInset: true,
               backgroundColor: Colors.transparent,
               appBar: AppBar(
-                title: const Text('Edit Memory'),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                title: const Center(
+                  child: Text(
+                    'Edit Memory',
+                    style: customTextStyle,
+                  ),
+                ),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.save),
-                    onPressed: _updateEntry,
-                  ),
-                ],
               ),
-              body: FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(FirebaseAuth.instance.currentUser!.uid)
-                    .collection('diary_entries')
-                    .doc(widget.documentId)
-                    .get(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || !snapshot.data!.exists) {
-                    return const Center(child: Text('Memory not found.'));
-                  }
-
-                  final entry = snapshot.data!.data() as Map<String, dynamic>;
-                  final title = entry['title'] ?? 'No Title';
-                  final content = entry['content'] ?? 'No Content';
-                  final timestamp = entry['timestamp'] as Timestamp?;
-                  final date = timestamp != null
-                      ? DateFormat('dd MMM yyyy').format(timestamp.toDate())
-                      : 'No Date';
-                  final imageUrl = entry['image_url'] as String?;
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: _titleController,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Title',
-                            hintStyle: TextStyle(color: Colors.grey),
-                          ),
-                          style: const TextStyle(
-                              fontSize: 24, color: Colors.black),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          date,
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 16),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _contentController,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Content',
-                            hintStyle: TextStyle(color: Colors.grey),
-                          ),
-                          style: const TextStyle(
-                              fontSize: 18, color: Colors.black),
-                          keyboardType: TextInputType.multiline,
-                          minLines: 5,
-                          maxLines: null,
-                        ),
-                        if (_imageFile != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: Image.file(
-                              File(_imageFile!.path),
-                              height: 300,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        else if (imageUrl != null && imageUrl.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: Image.network(
-                              imageUrl,
-                              height: 300,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _pickImage,
-                          icon: const Icon(Icons.add_photo_alternate_outlined),
-                          label: const Text('Add Photo'),
-                        ),
-                      ],
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Calendar(onDateChanged: _handleDateChanged),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Title',
+                        hintStyle: hintTextStyle,
+                      ),
+                      style: customTextStyle,
                     ),
-                  );
-                },
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _contentController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Content',
+                        hintStyle: hintTextStyle,
+                      ),
+                      style: customTextStyle,
+                      keyboardType: TextInputType.multiline,
+                      minLines: 5,
+                      maxLines: null,
+                    ),
+                    if (_imageFile != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Image.file(
+                          File(_imageFile!.path),
+                          height: 300,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else if (_imageUrl != null && _imageUrl!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Image.network(
+                          _imageUrl!,
+                          height: 300,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? MediaQuery.of(context).viewInsets.bottom + 15.0
+                  : 80.0,
+              right: 15.0,
+              child: Container(
+                width: 120,
+                height: 50,
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF26950),
+                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.add_photo_alternate_outlined,
+                        color: iconStyle().color,
+                        size: iconStyle().size,
+                      ),
+                      onPressed: _pickImage,
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.update_sharp,
+                        color: iconStyle().color,
+                        size: iconStyle().size,
+                      ),
+                      onPressed: _updateEntry,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
