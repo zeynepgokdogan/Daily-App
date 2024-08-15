@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_app/pages/datail_page.dart';
-import 'package:flutter_app/pages/daily.dart';
+import 'package:flutter_app/pages/edit_diary.dart';
+import 'package:flutter_app/pages/add_diary.dart';
+import 'package:flutter_app/pages/login_page.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +26,11 @@ class HomePage extends StatelessWidget {
             left: 0,
             right: 0,
             child: AppBar(
-              title: Center(child: const Text('My Memories')),
+              title: const Center(child: Text('My Memories')),
               backgroundColor: Colors.transparent,
               elevation: 0,
               flexibleSpace: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/5.png'),
                     fit: BoxFit.cover,
@@ -47,6 +48,20 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           Padding(
@@ -94,16 +109,14 @@ class HomePage extends StatelessWidget {
                             final documentId = entries[index].id;
 
                             return Container(
-                              width: 350,
-                              height: 250,
                               margin: const EdgeInsets.symmetric(
                                   vertical: 8.0, horizontal: 16.0),
                               decoration: BoxDecoration(
-                                color: Color(0xFFF8FCFF),
+                                color: const Color(0xFFF8FCFF),
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(10)),
+                                    const BorderRadius.all(Radius.circular(10)),
                                 border: Border.all(
-                                  color: Color(0xFFF7C9C1),
+                                  color: const Color(0xFFF7C9C1),
                                   width: 2.0,
                                 ),
                                 boxShadow: [
@@ -111,7 +124,7 @@ class HomePage extends StatelessWidget {
                                     color: Colors.black.withOpacity(0.2),
                                     spreadRadius: 1,
                                     blurRadius: 5,
-                                    offset: Offset(0, 3),
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -136,7 +149,11 @@ class HomePage extends StatelessWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(content),
+                                            Text(
+                                              content,
+                                              maxLines: 6,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                             if (imageUrl != null &&
                                                 imageUrl.isNotEmpty)
                                               Padding(
@@ -152,7 +169,7 @@ class HomePage extends StatelessWidget {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => DetailPage(
+                                              builder: (context) => EditDiary(
                                                   documentId: documentId),
                                             ),
                                           );
@@ -199,15 +216,15 @@ class HomePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const Daily(),
+              builder: (context) => const AddDiary(),
             ),
           );
         },
+        backgroundColor: const Color(0xFFF26950),
         child: const Icon(
           Icons.add,
           color: Colors.white,
         ),
-        backgroundColor: const Color(0xFFF26950),
       ),
     );
   }

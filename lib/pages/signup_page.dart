@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print, library_private_types_in_public_api
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +33,6 @@ class _SignUpPageState extends State<SignUpPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 32),
-              // Name field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -45,7 +46,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Surname field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -59,7 +59,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Email field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -73,7 +72,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Password field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -88,7 +86,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Sign Up button
               ElevatedButton(
                 onPressed: createAccount,
                 child: const Text('Sign Up'),
@@ -102,17 +99,14 @@ class _SignUpPageState extends State<SignUpPage> {
 
   void createAccount() async {
     try {
-      // Create the user with email and password
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: _email.trim(),
         password: _password,
       );
 
-      // Get the user ID
       String uid = userCredential.user!.uid;
 
-      // Store additional user information in Firestore
       await _firestore.collection('users').doc(uid).set({
         'name': _name,
         'surname': _surname,

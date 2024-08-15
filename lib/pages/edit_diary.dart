@@ -5,21 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '/util/styles.dart';
 import '/util/calendar.dart';
 
-class DetailPage extends StatefulWidget {
+class EditDiary extends StatefulWidget {
   final String documentId;
 
-  const DetailPage({Key? key, required this.documentId}) : super(key: key);
+  const EditDiary({super.key, required this.documentId});
 
   @override
-  _DetailPageState createState() => _DetailPageState();
+  // ignore: library_private_types_in_public_api
+  _EditDiaryState createState() => _EditDiaryState();
 }
 
-class _DetailPageState extends State<DetailPage> {
+class _EditDiaryState extends State<EditDiary> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   DateTime? _selectedDate;
@@ -82,6 +82,7 @@ class _DetailPageState extends State<DetailPage> {
           final imageUrl = await ref.getDownloadURL();
           entry['image_url'] = imageUrl;
         } catch (e) {
+          // ignore: avoid_print
           print('Error uploading image: $e');
         }
       } else if (_imageUrl != null) {
@@ -95,6 +96,7 @@ class _DetailPageState extends State<DetailPage> {
           .doc(widget.documentId)
           .update(entry);
 
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Memory updated successfully!')),
       );
@@ -117,24 +119,11 @@ class _DetailPageState extends State<DetailPage> {
         });
       }
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Camera permission is required to pick images.')),
       );
-    }
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
     }
   }
 

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
@@ -10,14 +9,14 @@ import 'package:intl/intl.dart';
 import '/util/styles.dart';
 import '/util/calendar.dart';
 
-class Daily extends StatefulWidget {
-  const Daily({Key? key}) : super(key: key);
+class AddDiary extends StatefulWidget {
+  const AddDiary({super.key});
 
   @override
-  State<Daily> createState() => _DailyState();
+  State<AddDiary> createState() => _AddDiaryState();
 }
 
-class _DailyState extends State<Daily> {
+class _AddDiaryState extends State<AddDiary> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   DateTime? _selectedDate;
@@ -26,12 +25,12 @@ class _DailyState extends State<Daily> {
   void _handleDateChanged(DateTime? selectedDate) {
     setState(() {
       _selectedDate = selectedDate;
+      // ignore: avoid_print
       print(
-          "Date received in Daily: ${_selectedDate != null ? DateFormat('dd MMM yyyy').format(_selectedDate!) : 'None'}"); // Debug print
+          "Date received in Daily: ${_selectedDate != null ? DateFormat('dd MMM yyyy').format(_selectedDate!) : 'None'}");
     });
   }
 
-  // Method to save daily entry
   Future<void> _saveDaily() async {
     String title = _titleController.text.trim();
     String content = _contentController.text.trim();
@@ -58,6 +57,7 @@ class _DailyState extends State<Daily> {
           final imageUrl = await ref.getDownloadURL();
           entry['image_url'] = imageUrl;
         } catch (e) {
+          // ignore: avoid_print
           print('Error uploading image: $e');
         }
       }
@@ -73,6 +73,7 @@ class _DailyState extends State<Daily> {
       setState(() {
         _imageFile = null;
       });
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Memory saved Successfully!')),
       );
@@ -93,6 +94,7 @@ class _DailyState extends State<Daily> {
         _imageFile = pickedFile;
       });
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Camera permission is required to pick images.')),

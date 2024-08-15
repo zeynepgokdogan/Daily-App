@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class Calendar extends StatefulWidget {
   final ValueChanged<DateTime?> onDateChanged;
 
-  const Calendar({Key? key, required this.onDateChanged}) : super(key: key);
+  const Calendar({super.key, required this.onDateChanged});
 
   @override
   State<Calendar> createState() => _CalendarState();
@@ -26,6 +26,7 @@ class _CalendarState extends State<Calendar> {
       setState(() {
         _selectedDate = picked;
         widget.onDateChanged(_selectedDate);
+        // ignore: avoid_print
         print(
             "Selected date in Calendar: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
       });
@@ -63,6 +64,7 @@ class _CalendarState extends State<Calendar> {
                 _selectedDate = (_selectedDate ?? DateTime.now())
                     .subtract(const Duration(days: 1));
                 widget.onDateChanged(_selectedDate);
+                // ignore: avoid_print
                 print(
                     "Date changed to: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
               });
@@ -101,6 +103,7 @@ class _CalendarState extends State<Calendar> {
                 _selectedDate = (_selectedDate ?? DateTime.now())
                     .add(const Duration(days: 1));
                 widget.onDateChanged(_selectedDate);
+                // ignore: avoid_print
                 print(
                     "Date changed to: ${DateFormat('dd MMM yyyy').format(_selectedDate!)}"); // Debug print
               });

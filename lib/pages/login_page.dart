@@ -1,12 +1,15 @@
+// ignore_for_file: avoid_print, duplicate_ignore
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/home_page.dart';
 import 'signup_page.dart';
-import 'daily.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _LoginPageState createState() => _LoginPageState();
 }
 
@@ -34,7 +37,6 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const SizedBox(height: 32),
-              // Email field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -48,7 +50,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Password field
               TextField(
                 onChanged: (value) {
                   setState(() {
@@ -63,7 +64,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Login button
               ElevatedButton(
                 onPressed: () {
                   signInWithEmailAndPassword();
@@ -71,7 +71,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: const Text('Login'),
               ),
               const SizedBox(height: 8),
-              // Create Account button
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -95,12 +94,14 @@ class _LoginPageState extends State<LoginPage> {
         email: _email.trim(),
         password: _password,
       );
+      // ignore: avoid_print
       print('User logged in: ${userCredential.user?.email}');
 
       // Navigate to HomePage after successful login
       Navigator.pushReplacement(
+        // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (context) => const Daily()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (e) {
       print('Error: ${e.toString()}');
