@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -96,6 +98,7 @@ class _EditDiaryState extends State<EditDiary> {
           .doc(widget.documentId)
           .update(entry);
 
+      // ignore: duplicate_ignore
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Memory updated successfully!')),
@@ -119,11 +122,46 @@ class _EditDiaryState extends State<EditDiary> {
         });
       }
     } else {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Camera permission is required to pick images.')),
       );
+    }
+  }
+
+  Future<void> _deleteEntry() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this entry?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('diary_entries')
+          .doc(widget.documentId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Memory deleted successfully!')),
+      );
+      Navigator.pop(context);
     }
   }
 
@@ -149,16 +187,33 @@ class _EditDiaryState extends State<EditDiary> {
               appBar: AppBar(
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
+                  color: accentColor,
                   onPressed: () {
                     Navigator.pop(context);
                   },
                 ),
-                title: const Center(
-                  child: Text(
-                    'Edit Memory',
-                    style: customTextStyle,
-                  ),
+                title: Text(
+                  'EDIT MEMORY',
+                  style: customTextStyle,
                 ),
+                actions: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        color: accentColor,
+                        onPressed: _deleteEntry,
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.save_alt_outlined,
+                          color: accentColor,
+                        ),
+                        onPressed: _updateEntry,
+                      ),
+                    ],
+                  )
+                ],
                 backgroundColor: Colors.transparent,
                 elevation: 0,
               ),
@@ -176,7 +231,8 @@ class _EditDiaryState extends State<EditDiary> {
                         hintText: 'Title',
                         hintStyle: hintTextStyle,
                       ),
-                      style: customTextStyle,
+                      style:
+                          customTextStyle.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -220,11 +276,11 @@ class _EditDiaryState extends State<EditDiary> {
                   : 80.0,
               right: 15.0,
               child: Container(
-                width: 120,
+                width: 60,
                 height: 50,
                 padding: const EdgeInsets.all(5),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF26950),
+                  color: primaryColor,
                   borderRadius: BorderRadius.all(Radius.circular(50)),
                 ),
                 child: Row(
@@ -237,14 +293,6 @@ class _EditDiaryState extends State<EditDiary> {
                         size: iconStyle().size,
                       ),
                       onPressed: _pickImage,
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.update_sharp,
-                        color: iconStyle().color,
-                        size: iconStyle().size,
-                      ),
-                      onPressed: _updateEntry,
                     ),
                   ],
                 ),

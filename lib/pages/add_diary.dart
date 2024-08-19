@@ -123,16 +123,15 @@ class _AddDiaryState extends State<AddDiary> {
               appBar: AppBar(
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
+                  color: accentColor,
                   onPressed: () {
                     Navigator.pop(context);
                   },
                 ),
-                title: const Center(
-                  child: Text(
-                    'Add Memories',
-                    style: customTextStyle,
-                    textAlign: TextAlign.left,
-                  ),
+                title: Text(
+                  'ADD MEMORY',
+                  style: customTextStyle,
+                  textAlign: TextAlign.left,
                 ),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
@@ -152,7 +151,8 @@ class _AddDiaryState extends State<AddDiary> {
                         hintStyle: hintTextStyle,
                         hintText: 'Title',
                       ),
-                      style: customTextStyle,
+                      style:
+                          customTextStyle.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -192,7 +192,7 @@ class _AddDiaryState extends State<AddDiary> {
                 height: 50,
                 padding: const EdgeInsets.all(5),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF26950),
+                  color: primaryColor,
                   borderRadius: BorderRadius.all(Radius.circular(50)),
                 ),
                 child: Row(

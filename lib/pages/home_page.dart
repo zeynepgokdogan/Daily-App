@@ -3,11 +3,81 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/pages/edit_diary.dart';
 import 'package:flutter_app/pages/add_diary.dart';
 import 'package:flutter_app/pages/login_page.dart';
+import 'package:flutter_app/util/styles.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  Future<void> _saveAsPdf(BuildContext context) async {
+    final pdf = pw.Document();
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    try {
+      if (user == null) {
+        print('No user signed in');
+        return;
+      }
+
+      // Fetch data from Firestore
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('diary_entries')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        pdf.addPage(pw.Page(
+          build: (pw.Context context) =>
+              pw.Center(child: pw.Text('No memories found.')),
+        ));
+      } else {
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          final title = data['title'] ?? 'No Title';
+          final content = data['content'] ?? 'No Content';
+          final timestamp = data['timestamp'] as Timestamp?;
+          final date = timestamp != null
+              ? DateFormat('dd MMM yyyy').format(timestamp.toDate())
+              : 'No Date';
+
+          pdf.addPage(pw.Page(
+            build: (pw.Context context) => pw.Padding(
+              padding: pw.EdgeInsets.all(16.0),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(title,
+                      style: pw.TextStyle(
+                          fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 8),
+                  pw.Text(content, style: pw.TextStyle(fontSize: 16)),
+                  pw.SizedBox(height: 8),
+                  pw.Text(date,
+                      style: pw.TextStyle(fontSize: 12, color: PdfColors.grey)),
+                ],
+              ),
+            ),
+          ));
+        }
+      }
+
+      // Save and print the PDF
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+    } catch (e) {
+      print('Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to generate PDF: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,43 +95,53 @@ class HomePage extends StatelessWidget {
           Positioned(
             left: 0,
             right: 0,
-            child: AppBar(
-              title: const Center(child: Text('My Memories')),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/5.png'),
-                    fit: BoxFit.cover,
-                  ),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20.0, left: 20.0),
+              child: AppBar(
+                title: const Text(
+                  'MEMORIES',
+                  style: appBarTextStyle,
                 ),
-                child: Container(
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'My Memories',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/5.png'),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(Icons.logout),
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
+                actions: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => _saveAsPdf(context),
+                        icon: const Icon(
+                          Icons.picture_as_pdf_outlined,
+                        ),
+                        color: accentColor,
+                        iconSize: 30,
                       ),
-                    );
-                  },
-                ),
-              ],
+                      IconButton(
+                        icon: const Icon(Icons.power_settings_new),
+                        color: accentColor,
+                        iconSize: 30,
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.pushReplacement(
+                            // ignore: use_build_context_synchronously
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Padding(
@@ -184,7 +264,7 @@ class HomePage extends StatelessWidget {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8.0, vertical: 4.0),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFf79c8c),
+                                        color: secondaryColor,
                                         borderRadius:
                                             BorderRadius.circular(8.0),
                                       ),
@@ -220,7 +300,7 @@ class HomePage extends StatelessWidget {
             ),
           );
         },
-        backgroundColor: const Color(0xFFF26950),
+        backgroundColor: primaryColor,
         child: const Icon(
           Icons.add,
           color: Colors.white,

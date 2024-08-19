@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/util/styles.dart';
 import 'package:intl/intl.dart';
 
 class Calendar extends StatefulWidget {
   final ValueChanged<DateTime?> onDateChanged;
 
-  const Calendar({super.key, required this.onDateChanged});
+  const Calendar(
+      {super.key, required this.onDateChanged, DateTime? initialDate});
 
   @override
   State<Calendar> createState() => _CalendarState();
@@ -43,9 +45,9 @@ class _CalendarState extends State<Calendar> {
       width: 359,
       height: 50,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-      margin: const EdgeInsets.only(top: 101, left: 22),
+      margin: const EdgeInsets.only(left: 22),
       decoration: const BoxDecoration(
-        color: Color(0xFFF26950),
+        color: primaryColor,
         borderRadius: BorderRadius.all(Radius.circular(20)),
       ),
       child: Row(
