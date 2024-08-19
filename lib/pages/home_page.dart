@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app/pages/edit_diary.dart';
 import 'package:flutter_app/pages/add_diary.dart';
 import 'package:flutter_app/pages/login_page.dart';
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:http/http.dart' as http;
 import 'package:printing/printing.dart';
 
 class HomePage extends StatelessWidget {
@@ -17,13 +19,16 @@ class HomePage extends StatelessWidget {
     final pdf = pw.Document();
     final User? user = FirebaseAuth.instance.currentUser;
 
+    // Define custom font
+    final font = pw.Font.ttf(await rootBundle
+        .load('assets/fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf'));
+
     try {
       if (user == null) {
         print('No user signed in');
         return;
       }
 
-      // Fetch data from Firestore
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -33,8 +38,9 @@ class HomePage extends StatelessWidget {
 
       if (snapshot.docs.isEmpty) {
         pdf.addPage(pw.Page(
-          build: (pw.Context context) =>
-              pw.Center(child: pw.Text('No memories found.')),
+          build: (pw.Context context) => pw.Center(
+              child: pw.Text('No memories found.',
+                  style: pw.TextStyle(font: font))),
         ));
       } else {
         for (var doc in snapshot.docs) {
@@ -45,6 +51,17 @@ class HomePage extends StatelessWidget {
           final date = timestamp != null
               ? DateFormat('dd MMM yyyy').format(timestamp.toDate())
               : 'No Date';
+          final imageUrl = data['image_url'] as String?;
+
+          // Fetch image data if the image URL is present
+          pw.ImageProvider? image;
+          if (imageUrl != null && imageUrl.isNotEmpty) {
+            final response = await http.get(Uri.parse(imageUrl));
+            if (response.statusCode == 200) {
+              final imageBytes = response.bodyBytes;
+              image = pw.MemoryImage(imageBytes);
+            }
+          }
 
           pdf.addPage(pw.Page(
             build: (pw.Context context) => pw.Padding(
@@ -54,12 +71,20 @@ class HomePage extends StatelessWidget {
                 children: [
                   pw.Text(title,
                       style: pw.TextStyle(
-                          fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                          fontSize: 24,
+                          fontWeight: pw.FontWeight.bold,
+                          font: font)),
                   pw.SizedBox(height: 8),
-                  pw.Text(content, style: pw.TextStyle(fontSize: 16)),
+                  pw.Text(content,
+                      style: pw.TextStyle(fontSize: 16, font: font)),
                   pw.SizedBox(height: 8),
                   pw.Text(date,
-                      style: pw.TextStyle(fontSize: 12, color: PdfColors.grey)),
+                      style: pw.TextStyle(
+                          fontSize: 12, color: PdfColors.grey, font: font)),
+                  if (image != null) ...[
+                    pw.SizedBox(height: 16),
+                    pw.Image(image),
+                  ],
                 ],
               ),
             ),
@@ -67,7 +92,6 @@ class HomePage extends StatelessWidget {
         }
       }
 
-      // Save and print the PDF
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
       );
